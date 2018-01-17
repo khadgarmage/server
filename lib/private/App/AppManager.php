@@ -37,6 +37,7 @@ use OCP\App\AppPathNotFoundException;
 use OCP\App\IAppManager;
 use OCP\App\ManagerEvent;
 use OCP\ICacheFactory;
+use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -59,8 +60,8 @@ class AppManager implements IAppManager {
 	/** @var IUserSession */
 	private $userSession;
 
-	/** @var AppConfig */
-	private $appConfig;
+	/** @var IConfig */
+	private $config;
 
 	/** @var IGroupManager */
 	private $groupManager;
@@ -88,18 +89,18 @@ class AppManager implements IAppManager {
 
 	/**
 	 * @param IUserSession $userSession
-	 * @param AppConfig $appConfig
+	 * @param IConfig $config
 	 * @param IGroupManager $groupManager
 	 * @param ICacheFactory $memCacheFactory
 	 * @param EventDispatcherInterface $dispatcher
 	 */
 	public function __construct(IUserSession $userSession,
-								AppConfig $appConfig,
+								IConfig $config,
 								IGroupManager $groupManager,
 								ICacheFactory $memCacheFactory,
 								EventDispatcherInterface $dispatcher) {
 		$this->userSession = $userSession;
-		$this->appConfig = $appConfig;
+		$this->config = $config;
 		$this->groupManager = $groupManager;
 		$this->memCacheFactory = $memCacheFactory;
 		$this->dispatcher = $dispatcher;
@@ -110,7 +111,7 @@ class AppManager implements IAppManager {
 	 */
 	private function getInstalledAppsValues() {
 		if (!$this->installedAppsCache) {
-			$values = $this->appConfig->getValues(false, 'enabled');
+			$values = $this->config->getAppValue(false, 'enabled');
 
 			$alwaysEnabledApps = $this->getAlwaysEnabledApps();
 			foreach($alwaysEnabledApps as $appId) {
@@ -227,7 +228,7 @@ class AppManager implements IAppManager {
 		$this->getAppPath($appId);
 
 		$this->installedAppsCache[$appId] = 'yes';
-		$this->appConfig->setValue($appId, 'enabled', 'yes');
+		$this->config->setAppValue($appId, 'enabled', 'yes');
 		$this->dispatcher->dispatch(ManagerEvent::EVENT_APP_ENABLE, new ManagerEvent(
 			ManagerEvent::EVENT_APP_ENABLE, $appId
 		));
@@ -270,7 +271,7 @@ class AppManager implements IAppManager {
 			return $group->getGID();
 		}, $groups);
 		$this->installedAppsCache[$appId] = json_encode($groupIds);
-		$this->appConfig->setValue($appId, 'enabled', json_encode($groupIds));
+		$this->config->setAppValue($appId, 'enabled', json_encode($groupIds));
 		$this->dispatcher->dispatch(ManagerEvent::EVENT_APP_ENABLE_FOR_GROUPS, new ManagerEvent(
 			ManagerEvent::EVENT_APP_ENABLE_FOR_GROUPS, $appId, $groups
 		));
@@ -288,14 +289,7 @@ class AppManager implements IAppManager {
 			throw new \Exception("$appId can't be disabled.");
 		}
 		unset($this->installedAppsCache[$appId]);
-		$this->appConfig->setValue($appId, 'enabled', 'no');
-
-		// run uninstall steps
-		$appData = $this->getAppInfo($appId);
-		if (!is_null($appData)) {
-			\OC_App::executeRepairSteps($appId, $appData['repair-steps']['uninstall']);
-		}
-
+		$this->config->setAppValue($appId, 'enabled', 'no');
 		$this->dispatcher->dispatch(ManagerEvent::EVENT_APP_DISABLE, new ManagerEvent(
 			ManagerEvent::EVENT_APP_DISABLE, $appId
 		));
@@ -338,7 +332,7 @@ class AppManager implements IAppManager {
 		$apps = $this->getInstalledApps();
 		foreach ($apps as $appId) {
 			$appInfo = $this->getAppInfo($appId);
-			$appDbVersion = $this->appConfig->getValue($appId, 'installed_version');
+			$appDbVersion = $this->config->getAppValue($appId, 'installed_version', '0.0.0');
 			if ($appDbVersion
 				&& isset($appInfo['version'])
 				&& version_compare($appInfo['version'], $appDbVersion, '>')

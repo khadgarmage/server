@@ -687,7 +687,7 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerService(AppManager::class, function (Server $c) {
 			return new \OC\App\AppManager(
 				$c->getUserSession(),
-				$c->query(\OC\AppConfig::class),
+				$c->getConfig(),
 				$c->getGroupManager(),
 				$c->getMemCacheFactory(),
 				$c->getEventDispatcher()

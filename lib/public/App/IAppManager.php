@@ -109,6 +109,7 @@ interface IAppManager {
 	 *
 	 * @param string $appId
 	 * @since 8.0.0
+	 * @throws \Exception
 	 */
 	public function disableApp($appId);
 
