@@ -371,7 +371,13 @@ OC.Settings.Apps = OC.Settings.Apps || {
 			elements.forEach(function(element) {
 				element.val(t('settings','Disabling app …'));
 			});
-			$.post(OC.filePath('settings','ajax','disableapp.php'),{appid:appId},function(result) {
+			$.post(OC.generateUrl('/settings/apps/enable/' + appId))
+				.done(function(result) {
+					console.log(result);
+				}).fail(function(xhr, status, error) {
+					console.log(error);
+				});
+			/*
 				if(!result || result.status !== 'success') {
 					if (result.data && result.data.message) {
 						OC.Settings.Apps.showErrorMessage(appId, result.data.message);
@@ -409,7 +415,7 @@ OC.Settings.Apps = OC.Settings.Apps || {
 					});
 					OC.Settings.Apps.State.apps[appId].active = false;
 				}
-			},'json');
+			},'json');*/
 		} else {
 			// TODO: display message to admin to not refresh the page!
 			// TODO: lock UI to prevent further operations
@@ -423,7 +429,7 @@ OC.Settings.Apps = OC.Settings.Apps || {
 			} else {
 				appIdArray = appId;
 			}
-			$.post(OC.filePath('settings','ajax','enableapp.php'),{appIds: appIdArray, groups: groups},function(result) {
+			$.post(OC.generateUrl('/settings/apps/enable'),{appIds: appIdArray, groups: groups},function(result) {
 				if(!result || result.status !== 'success') {
 					if (result.data && result.data.message) {
 						OC.Settings.Apps.showErrorMessage(appId, result.data.message);
