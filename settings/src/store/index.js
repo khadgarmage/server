@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import users from './users';
+import apps from './apps';
 import settings from './settings';
 import oc from './oc';
 
@@ -19,6 +20,7 @@ const mutations = {
 export default new Vuex.Store({
 	modules: {
 		users,
+		apps,
 		settings,
 		oc
 	},
